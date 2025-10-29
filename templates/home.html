@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+{% block title %}Home - FitFusion{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>Fitness Dashboard - FitFusion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 4px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background-color: #4facfe;
+      border-radius: 9999px;
+    }
+    .todo-card {
+      transition: all 0.3s ease;
+    }
+    .todo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(79, 172, 254, 0.2);
+    }
+    .notification-modal {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 min-h-screen flex flex-col">
+  <main class="flex-grow max-w-md mx-auto px-5 pt-8 pb-24">
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <p
+            class="px-4 py-2 rounded-xl mb-5 text-center text-sm
+            {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}"
+          >
+            {{ message }}
+          </p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <p class="text-gray-400 text-sm">Welcome Back,</p>
+        <h1 class="font-extrabold text-2xl leading-tight">{{ name | capitalize | default('User') }}</h1>
+      </div>
+      <button onclick="openNotifications()" aria-label="Notifications" class="bg-white shadow-md rounded-xl p-3 flex items-center justify-center w-12 h-12">
+        <i class="fas fa-bell text-gray-700 relative">
+          <span class="absolute top-1 right-1 block w-2.5 h-2.5 rounded-full bg-red-500"></span>
+        </i>
+      </button>
+    </div>
+
+    <!-- BMI Card Section -->
+    <section class="relative rounded-3xl p-6 mb-6 text-white" style="background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%)">
+      <div class="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="absolute top-0 right-0 w-20 h-20 rounded-full bg-white/10 blur-3xl"></div>
+      <h2 class="font-semibold text-lg mb-1">BMI (Body Mass Index)</h2>
+      <p class="text-sm mb-4">You have a {{ bmi_status | lower }}</p>
+      <button class="font-semibold text-sm mb-6">View More</button>
+      <div class="absolute top-6 right-6 w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center">
+        <svg id="bmi-circle" class="drop-shadow-lg" fill="none" height="60" viewBox="0 0 60 60" width="60" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" fill="white" fill-opacity="0.9" r="30"></circle>
+          <path id="bmi-fill" d="M30 0C46.5685 0 60 13.4315 60 30H30V0Z" stroke="#4facfe" stroke-width="0.5"></path>
+        </svg>
+        <span class="absolute text-[#bceff1] font-semibold text-sm top-1/2 right-6 -translate-y-1/2">{{ bmi }}</span>
+      </div>
+    </section>
+
+    <!-- Today Target Section -->
+    <section class="bg-blue-100 rounded-3xl px-6 py-4 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-lg">Today Target</h3>
+        <button onclick="openTodoModal()" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white text-sm font-semibold rounded-full px-5 py-1">
+          Add Task
+        </button>
+      </div>
+      <div id="todo-list" class="space-y-3">
+        {% for todo in todos %}
+          <div class="todo-card bg-white rounded-xl p-4 shadow-md flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <input type="checkbox" class="form-checkbox h-5 w-5 text-[#4facfe]" 
+                     onclick="toggleTodo({{ todo.id }}, this.checked)" {{ 'checked' if todo.completed else '' }}>
+              <span class="text-sm {{ 'line-through text-gray-400' if todo.completed else 'text-gray-900' }}">{{ todo.task }}</span>
+            </div>
+            <button onclick="deleteTodo({{ todo.id }})" class="text-red-500 hover:text-red-700">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Activity Status Section -->
+    <section class="bg-[#e6f0fc] rounded-3xl p-6 mb-6 text-center text-gray-900">
+      <h3 class="font-semibold text-lg mb-4 text-left">Activity Status</h3>
+      <div class="grid grid-cols-3 gap-4 text-sm font-normal">
+        <div>
+          <p class="mb-1">150 / 225</p>
+          <div class="h-1 rounded-full bg-[#4facfe] w-full"></div>
+          <p class="mt-1">Proteins</p>
+        </div>
+        <div>
+          <p class="mb-1">30 / 118</p>
+          <div class="h-1 rounded-full bg-[#4facfe] w-full"></div>
+          <p class="mt-1">Fats</p>
+        </div>
+        <div>
+          <p class="mb-1">319 / 340</p>
+          <div class="h-1 rounded-full bg-[#3a86ff] w-full"></div>
+          <p class="mt-1">Carbs</p>
+        </div>
+      </div>
+      <div class="mt-4">
+        <p class="mb-1">2456 / 3400</p>
+        <div class="h-1 rounded-full bg-[#3a86ff] w-full"></div>
+        <p class="mt-1">Calories</p>
+      </div>
+    </section>
+
+    <!-- Water Intake Section -->
+    <div class="mb-6">
+      <h2 class="font-semibold text-lg mb-4">Water Intake</h2>
+      <div class="bg-white rounded-3xl p-4 shadow-md">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-lg font-semibold">Water</span>
+          <div class="flex items-center">
+            <span id="water-intake" class="text-lg font-semibold mr-2">{{ user_data.water_intake }} / </span>
+            <button id="edit-max-btn" class="text-[#3a86ff] hover:text-[#4facfe]">
+              <span id="max-water-display">{{ user_data.water_goal }}</span>L
+              <i class="fas fa-edit ml-1 text-sm"></i>
+            </button>
+            <div id="max-water-edit" class="hidden ml-2 flex items-center">
+              <input type="number" id="max-water-input" class="w-12 border rounded px-1 py-0.5 text-sm" 
+                     min="0.5" max="10" step="0.1" value="{{ user_data.water_goal }}">
+              <span class="ml-1">L</span>
+              <button id="save-max-btn" class="ml-2 text-green-500 hover:text-green-700">
+                <i class="fas fa-check"></i>
+              </button>
+              <button id="cancel-max-btn" class="ml-1 text-red-500 hover:text-red-700">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <button id="decrease-btn" class="bg-gray-200 p-2 rounded-full hover:bg-gray-300 transition-colors">
+            <i class="fas fa-minus"></i>
+          </button>
+          <div class="relative w-16 h-32 bg-gray-200 rounded-full overflow-hidden">
+            <div id="water-level" class="absolute bottom-0 w-full bg-[#4facfe] transition-all duration-300" style="height: {{ (user_data.water_intake / user_data.water_goal * 100) | round(1) }}%;"></div>
+            <span id="water-percent" class="absolute inset-0 flex items-center justify-center text-white">{{ (user_data.water_intake / user_data.water_goal * 100) | round(1) }}%</span>
+          </div>
+          <button id="increase-btn" class="bg-gray-200 p-2 rounded-full hover:bg-gray-300 transition-colors">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <div class="text-right mt-2">
+          <span id="last-updated" class="text-sm text-gray-500">Last time unknown</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Tracking Widgets -->
+    <section class="bg-white rounded-3xl p-6 mb-6 shadow-md">
+      <h2 class="font-semibold text-lg mb-4">Track Your Health</h2>
+      <div class="space-y-4">
+        <!-- Weight Tracking -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
+              <i class="fas fa-weight text-gray-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold">Weight</p>
+              <p class="text-xs text-gray-500">{{ user_data.weight }} kg</p>
+            </div>
+          </div>
+          <a href="{{ url_for('weight') }}" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white px-4 py-1 rounded-lg text-sm font-semibold hover:from-[#3a86ff] hover:to-[#00d2fe]">
+            Track
+          </a>
+        </div>
+
+        <!-- Workout Tracking -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
+              <i class="fas fa-fire text-gray-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold">Workout</p>
+              <p class="text-xs text-gray-500">{{ user_data.workout_calories }} / {{ user_data.workout_goal }} cal</p>
+            </div>
+          </div>
+          <a href="{{ url_for('workout') }}" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white px-4 py-1 rounded-lg text-sm font-semibold hover:from-[#3a86ff] hover:to-[#00d2fe]">
+            Track
+          </a>
+        </div>
+
+        <!-- Steps Tracking -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
+              <i class="fas fa-shoe-prints text-gray-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold">Steps</p>
+              <p class="text-xs text-gray-500">{{ user_data.steps_count }} / {{ user_data.steps_goal }} steps</p>
+            </div>
+          </div>
+          <a href="{{ url_for('steps') }}" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white px-4 py-1 rounded-lg text-sm font-semibold hover:from-[#3a86ff] hover:to-[#00d2fe]">
+            Track
+          </a>
+        </div>
+
+        <!-- Sleep Tracking -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
+              <i class="fas fa-moon text-gray-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold">Sleep</p>
+              <p class="text-xs text-gray-500">{{ user_data.sleep_duration }} / {{ user_data.sleep_goal }} hr</p>
+            </div>
+          </div>
+          <a href="{{ url_for('sleep') }}" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white px-4 py-1 rounded-lg text-sm font-semibold hover:from-[#3a86ff] hover:to-[#00d2fe]">
+            Track
+          </a>
+        </div>
+
+        <!-- Water Tracking -->
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
+              <i class="fas fa-glass-whiskey text-gray-500"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold">Water</p>
+              <p class="text-xs text-gray-500">{{ user_data.water_intake }} / {{ user_data.water_goal }} L</p>
+            </div>
+          </div>
+          <a href="{{ url_for('water') }}" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white px-4 py-1 rounded-lg text-sm font-semibold hover:from-[#3a86ff] hover:to-[#00d2fe]">
+            Track
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workout Progress Section -->
+    <section class="mb-6">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold text-lg">Workout Progress</h3>
+        <button class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white text-xs font-semibold rounded-full px-4 py-1 flex items-center space-x-1">
+          <span>Weekly</span>
+          <i class="fas fa-chevron-down text-xs"></i>
+        </button>
+      </div>
+      <div class="relative">
+        <svg aria-hidden="true" class="select-none" fill="none" height="140" viewBox="0 0 350 140" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <line stroke="#ddd6fe" stroke-width="1" x1="0" x2="350" y1="20" y2="20"></line>
+          <line stroke="#ddd6fe" stroke-width="1" x1="0" x2="350" y1="56" y2="56"></line>
+          <line stroke="#ddd6fe" stroke-width="1" x1="0" x2="350" y1="92" y2="92"></line>
+          <line stroke="#ddd6fe" stroke-width="1" x1="0" x2="350" y1="128" y2="128"></line>
+          <path d="M0 92C25 128 50 20 75 56C100 92 125 20 150 56C175 92 200 20 225 56C250 92 275 20 300 56C325 92 350 20 375 56" opacity="0.3" stroke="#4facfe" stroke-width="2"></path>
+          <path d="M0 56C25 20 50 128 75 92C100 56 125 128 150 92C175 56 200 128 225 92C250 56 275 128 300 92C325 56 350 128 375 92" opacity="0.7" stroke="#3a86ff" stroke-width="2"></path>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="0" y="140">Sun</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="50" y="140">Mon</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="100" y="140">Tue</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="150" y="140">Wed</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="200" y="140">Thu</text>
+          <text fill="#3a86ff" font-family="Poppins" font-size="14" font-weight="700" x="250" y="140">Fri</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="300" y="140">Sat</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="320" y="20">100%</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="320" y="56">80%</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="320" y="92">60%</text>
+          <text fill="#3a86ff" font-family="Poppins" font-size="14" font-weight="700" x="320" y="128">40%</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="320" y="164">20%</text>
+          <text fill="#a1a1aa" font-family="Poppins" font-size="14" opacity="0.7" x="320" y="200">0%</text>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Latest Workout Section -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-lg">Latest Workout</h3>
+        <button class="text-gray-400 text-sm font-normal">See more</button>
+      </div>
+      <div class="flex items-center bg-white rounded-3xl p-4 mb-4 shadow-md space-x-4" style="box-shadow: 0 10px 20px rgba(79, 172, 254, 0.15)">
+        <img alt="Placeholder image for fullbody workout" class="w-12 h-12 rounded-full" draggable="false" height="48" src="https://picsum.photos/id/1001/48/48" width="48"/>
+        <div class="flex-1">
+          <p class="text-gray-300 font-semibold text-sm flex items-center"><i class="fas fa-dumbbell text-[#4facfe] mr-2"></i>Fullbody Workout</p>
+          <p class="text-gray-400 text-xs">180 Calories Burn | 20minutes</p>
+          <div class="h-2 rounded-full bg-[#4facfe] w-3/5 mt-2"></div>
+        </div>
+        <button aria-label="Go to Fullbody Workout details" class="text-[#3a86ff] text-lg">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="flex items-center bg-white rounded-3xl p-4 mb-4 shadow-md space-x-4" style="box-shadow: 0 10px 20px rgba(79, 172, 254, 0.15)">
+        <img alt="Placeholder image for lowerbody workout" class="w-12 h-12 rounded-full" draggable="false" height="48" src="https://picsum.photos/id/1002/48/48" width="48"/>
+        <div class="flex-1">
+          <p class="font-semibold text-sm flex items-center"><i class="fas fa-dumbbell text-[#4facfe] mr-2"></i>Lowerbody Workout</p>
+          <p class="text-gray-400 text-xs">200 Calories Burn | 30minutes</p>
+          <div class="h-2 rounded-full bg-[#4facfe] w-4/5 mt-2"></div>
+        </div>
+        <button aria-label="Go to Lowerbody Workout details" class="text-[#3a86ff] text-lg">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="flex items-center bg-white rounded-3xl p-4 mb-4 shadow-md space-x-4" style="box-shadow: 0 10px 20px rgba(79, 172, 254, 0.15)">
+        <img alt="Placeholder image for ab workout" class="w-12 h-12 rounded-full" draggable="false" height="48" src="https://picsum.photos/id/1003/48/48" width="48"/>
+        <div class="flex-1">
+          <p class="text-gray-300 font-semibold text-sm flex items-center"><i class="fas fa-dumbbell text-[#4facfe] mr-2"></i>Ab Workout</p>
+          <p class="text-gray-400 text-xs">150 Calories Burn | 15minutes</p>
+          <div class="h-2 rounded-full bg-[#4facfe] w-2/5 mt-2"></div>
+        </div>
+        <button aria-label="Go to Ab Workout details" class="text-[#3a86ff] text-lg">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Action Button for Chatbot -->
+  <a href="{{ url_for('chatbot') }}" aria-label="Chatbot" class="fixed bottom-24 right-6 bg-[#1f2f4f] w-16 h-16 rounded-full flex items-center justify-center shadow-lg">
+    <i class="fas fa-robot text-white text-2xl"></i>
+  </a>
+
+  <!-- Bottom Navigation -->
+  <!-- <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center px-8 py-3">
+    <a href="{{ url_for('profile') }}" aria-label="Profile" class="flex flex-col items-center text-gray-400 text-sm font-semibold">
+      <i class="fas fa-user text-xl mb-1"></i>
+      <span>Profile</span>
+    </a>
+    <a href="{{ url_for('progress') }}" aria-label="Progress" class="flex flex-col items-center text-gray-400 text-sm font-semibold">
+      <i class="fas fa-chart-line text-xl mb-1"></i>
+      <span>Progress</span>
+    </a>
+    <a href="{{ url_for('home') }}" aria-label="Home" class="flex flex-col items-center text-[#4facfe] text-sm font-semibold">
+      <i class="fas fa-home text-xl mb-1"></i>
+      <span>Home</span>
+      <span class="w-1.5 h-1.5 rounded-full bg-[#4facfe] mt-1"></span>
+    </a>
+    <a href="{{ url_for('recommend_diet') }}" aria-label="Recommendation" class="flex flex-col items-center text-gray-400 text-sm font-semibold">
+      <i class="fas fa-utensils text-xl mb-1"></i>
+      <span>Recommendation</span>
+    </a>
+  </nav> -->
+
+  <!-- To-Do Modal -->
+  <div id="todo-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Add Task</h3>
+        <button onclick="closeTodoModal()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="todo-form">
+        <div class="mb-4">
+          <input type="text" id="todo-input" class="w-full border rounded-xl px-4 py-2 text-sm" placeholder="Enter task" required>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeTodoModal()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-semibold">Cancel</button>
+          <button type="submit" class="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white px-4 py-2 rounded-xl text-sm font-semibold">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Modal -->
+  <div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full notification-modal">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Notifications</h3>
+        <button onclick="closeNotifications()" class="text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="notification-list" class="space-y-3">
+        {% for notification in notifications %}
+          <div class="bg-gray-100 rounded-xl p-4 flex items-start space-x-3">
+            <i class="fas fa-bell text-[#4facfe] mt-1"></i>
+            <div>
+              <p class="text-sm text-gray-900">{{ notification.message }}</p>
+              <p class="text-xs text-gray-500">{{ notification.created_at }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <button onclick="clearNotifications()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold w-full">Clear All</button>
+    </div>
+  </div>
+
+  <script>
+    // Water Intake Functionality
+    let waterIntake = {{ user_data.water_intake }};
+    let maxWater = {{ user_data.water_goal }};
+    let isEditingMax = false;
+
+    // DOM Elements for Water Intake
+    const waterIntakeDisplay = document.getElementById("water-intake");
+    const maxWaterDisplay = document.getElementById("max-water-display");
+    const waterLevel = document.getElementById("water-level");
+    const waterPercent = document.getElementById("water-percent");
+    const lastUpdated = document.getElementById("last-updated");
+    const editMaxBtn = document.getElementById("edit-max-btn");
+    const maxWaterEdit = document.getElementById("max-water-edit");
+    const maxWaterInput = document.getElementById("max-water-input");
+    const saveMaxBtn = document.getElementById("save-max-btn");
+    const cancelMaxBtn = document.getElementById("cancel-max-btn");
+    const increaseBtn = document.getElementById("increase-btn");
+    const decreaseBtn = document.getElementById("decrease-btn");
+
+    // Update water display
+    async function updateWaterIntake(action, value = null) {
+        if (action === 'set_max') {
+            const newMax = parseFloat(maxWaterInput.value);
+            if (!isNaN(newMax)) {
+                maxWater = Math.min(Math.max(newMax, 0.5), 10);
+            }
+            toggleEditMax();
+        } else if (action === 'set') {
+            waterIntake = Math.min(Math.max(value, 0), maxWater);
+        } else if (action === 'increase') {
+            waterIntake = Math.min(waterIntake + 0.1, maxWater);
+        } else if (action === 'decrease') {
+            waterIntake = Math.max(waterIntake - 0.1, 0);
+        }
+
+        try {
+            const response = await fetch('/api/update_water', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, max: maxWater, value: waterIntake })
+            });
+            const data = await response.json();
+            waterIntake = data.intake;
+            maxWater = data.max;
+            const percentage = Math.round((waterIntake / maxWater) * 100);
+            waterIntakeDisplay.textContent = `${waterIntake.toFixed(1)} / `;
+            maxWaterDisplay.textContent = maxWater.toFixed(1);
+            waterLevel.style.height = `${percentage}%`;
+            waterPercent.textContent = `${percentage}%`;
+            lastUpdated.textContent = `Last time ${new Date(data.last_updated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+        } catch (error) {
+            console.error('Error updating water intake:', error);
+        }
+    }
+
+    // Toggle max water edit mode
+    function toggleEditMax() {
+        isEditingMax = !isEditingMax;
+        if (isEditingMax) {
+            editMaxBtn.classList.add('hidden');
+            maxWaterEdit.classList.remove('hidden');
+            maxWaterInput.value = maxWater;
+            maxWaterInput.focus();
+        } else {
+            editMaxBtn.classList.remove('hidden');
+            maxWaterEdit.classList.add('hidden');
+        }
+    }
+
+    // Event Listeners for Water Intake
+    editMaxBtn.addEventListener('click', toggleEditMax);
+    saveMaxBtn.addEventListener('click', () => updateWaterIntake('set_max'));
+    cancelMaxBtn.addEventListener('click', toggleEditMax);
+    maxWaterInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') updateWaterIntake('set_max');
+    });
+    increaseBtn.addEventListener('click', () => updateWaterIntake('increase'));
+    decreaseBtn.addEventListener('click', () => updateWaterIntake('decrease'));
+
+    // BMI Circle Functionality
+    function updateBMICircle(bmi) {
+        const bmiFill = document.getElementById("bmi-fill");
+        const maxBMI = 40;
+        const percentage = Math.min((bmi / maxBMI) * 100, 100);
+        const angle = (percentage / 100) * 360;
+        const radians = (angle * Math.PI) / 180;
+        const x = 30 + 30 * Math.cos(radians - Math.PI / 2);
+        const y = 30 + 30 * Math.sin(radians - Math.PI / 2);
+        const largeArcFlag = angle > 180 ? 1 : 0;
+        const pathD = `M30 0 A30 30 0 ${largeArcFlag} 1 ${x} ${y} L30 30 Z`;
+        bmiFill.setAttribute('d', pathD);
+        bmiFill.setAttribute('fill', '#4facfe');
+        bmiFill.setAttribute('stroke', '#4facfe');
+    }
+
+    // To-Do List Functionality
+    const todoModal = document.getElementById('todo-modal');
+    const todoForm = document.getElementById('todo-form');
+    const todoInput = document.getElementById('todo-input');
+    const todoList = document.getElementById('todo-list');
+
+    function openTodoModal() {
+        todoModal.classList.remove('hidden');
+        todoInput.focus();
+    }
+
+    function closeTodoModal() {
+        todoModal.classList.add('hidden');
+        todoInput.value = '';
+    }
+
+    async function addTodo(task) {
+        try {
+            const response = await fetch('/api/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task })
+            });
+            const data = await response.json();
+            if (data.id) {
+                const todoItem = document.createElement('div');
+                todoItem.className = 'todo-card bg-white rounded-xl p-4 shadow-md flex justify-between items-center';
+                todoItem.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" class="form-checkbox h-5 w-5 text-[#4facfe]" 
+                               onclick="toggleTodo(${data.id}, this.checked)">
+                        <span class="text-sm text-gray-900">${task}</span>
+                    </div>
+                    <button onclick="deleteTodo(${data.id})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                todoList.appendChild(todoItem);
+                closeTodoModal();
+            }
+        } catch (error) {
+            console.error('Error adding todo:', error);
+        }
+    }
+
+    async function toggleTodo(id, completed) {
+        try {
+            await fetch('/api/todos', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, completed })
+            });
+        } catch (error) {
+            console.error('Error toggling todo:', error);
+        }
+    }
+
+    async function deleteTodo(id) {
+        try {
+            await fetch('/api/todos', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const todoItem = document.querySelector(`button[onclick="deleteTodo(${id})"]`).closest('.todo-card');
+            todoItem.remove();
+        } catch (error) {
+            console.error('Error deleting todo:', error);
+        }
+    }
+
+    todoForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const task = todoInput.value.trim();
+        if (task) {
+            addTodo(task);
+        }
+    });
+
+    // Notification Functionality
+    const notificationModal = document.getElementById('notification-modal');
+
+    function openNotifications() {
+        notificationModal.classList.remove('hidden');
+    }
+
+    function closeNotifications() {
+        notificationModal.classList.add('hidden');
+    }
+
+    async function clearNotifications() {
+        try {
+            await fetch('/api/notifications', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            document.getElementById('notification-list').innerHTML = '';
+        } catch (error) {
+            console.error('Error clearing notifications:', error);
+        }
+    }
+
+    // Initialize
+    updateBMICircle({{ bmi }});
+  </script>
+</body>
+</html>
+{% endblock %}

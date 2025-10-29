@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}User Data - FitFusion{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+      }
+      /* Add this to the <style> section in your HTML or a separate CSS file */
+
+    </style>
+  </head>
+  <body class="bg-white min-h-screen flex items-center justify-center">
+    <main
+      class="w-full max-w-lg px-6 py-10 flex flex-col items-center justify-center"
+    >
+      <div class="text-center mb-10">
+        <h1 class="font-extrabold text-2xl text-[#1a1a1a]">Enter Your Details</h1>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <p
+              class="px-4 py-2 rounded-xl mb-5 text-center text-sm
+              {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}"
+            >
+              {{ message }}
+            </p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('user_data') }}" class="w-full space-y-5">
+        <!-- Name Field -->
+        <div>
+          <label
+            for="name-input"
+            class="block text-sm text-[#1a1a1a] mb-1"
+          >
+            Name:
+          </label>
+          <div class="relative">
+            <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-[#9e9e9e]"></i>
+            <input
+              id="name-input"
+              name="name-input"
+              type="text"
+              required
+              class="w-full bg-[#f1f4f3] rounded-xl text.semantic-sm pl-14 pr-6 py-4 text-[#1a1a1a] outline-none placeholder:text-[#9e9e9e]"
+            />
+          </div>
+        </div>
+
+        <!-- Gender Field -->
+        <div>
+          <label
+            for="gender-select"
+            class="block text-sm text-[#1a1a1a] mb-1"
+          >
+            Gender:
+          </label>
+          <div class="relative">
+            <i class="fas fa-venus-mars absolute left-4 top-1/2 -translate-y-1/2 text-[#9e9e9e]"></i>
+            <select
+              id="gender-select"
+              name="gender-select"
+              required
+              class="w-full bg-[#f1f4f3] rounded-xl text-sm pl-14 pr-6 py-4 text-[#1a1a1a] outline-none appearance-none"
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Age Field -->
+        <div>
+          <label
+            for="age-input"
+            class="block text-sm text-[#1a1a1a] mb-1"
+          >
+            Age:
+          </label>
+          <div class="relative">
+            <i class="fas fa-birthday-cake absolute left-4 top-1/2 -translate-y-1/2 text-[#9e9e9e]"></i>
+            <input
+              id="age-input"
+              name="age-input"
+              type="number"
+              required
+              min="1"
+              max="120"
+              class="w-full bg-[#f1f4f3] rounded-xl text-sm pl-14 pr-6 py-4 text-[#1a1a1a] outline-none placeholder:text-[#9e9e9e]"
+            />
+          </div>
+        </div>
+
+        <!-- Weight Field -->
+        <div>
+          <label
+            for="weight"
+            class="block text-sm text-[#1a1a1a] mb-1"
+          >
+            Weight (kg):
+          </label>
+          <div class="relative">
+            <i class="fas fa-weight absolute left-4 top-1/2 -translate-y-1/2 text-[#9e9e9e]"></i>
+            <input
+              id="weight"
+              name="weight"
+              type="number"
+              step="0.1"
+              required
+              min="0.1"
+              max="500"
+              class="w-full bg-[#f1f4f3] rounded-xl text-sm pl-14 pr-6 py-4 text-[#1a1a1a] outline-none placeholder:text-[#9e9e9e]"
+            />
+          </div>
+        </div>
+
+        <!-- Height Field -->
+        <div>
+          <label
+            for="height"
+            class="block text-sm text-[#1a1a1a] mb-1"
+          >
+            Height (cm):
+          </label>
+          <div class="relative">
+            <i class="fas fa-ruler-vertical absolute left-4 top-1/2 -translate-y-1/2 text-[#9e9e9e]"></i>
+            <input
+              id="height"
+              name="height"
+              type="number"
+              step="0.1"
+              required
+              min="0.1"
+              max="300"
+              class="w-full bg-[#f1f4f3] rounded-xl text-sm pl-14 pr-6 py-4 text-[#1a1a1a] outline-none placeholder:text-[#9e9e9e]"
+            />
+          </div>
+        </div>
+
+        <!-- Goal Field -->
+        <div>
+          <label
+            for="goal"
+            class="block text-sm text-[#1a1a1a] mb-1"
+          >
+            Goal:
+          </label>
+          <div class="relative">
+            <i class="fas fa-bullseye absolute left-4 top-1/2 -translate-y-1/2 text-[#9e9e9e]"></i>
+            <select
+              id="goal"
+              name="goal"
+              required
+              class="w-full bg-[#f1f4f3] rounded-xl text-sm pl-14 pr-6 py-4 text-[#1a1a1a] outline-none appearance-none"
+            >
+              <option value="Lose Weight">Lose Weight</option>
+              <option value="Gain Muscle">Gain Muscle</option>
+              <option value="Maintain Weight">Maintain Weight</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="mt-8 w-full bg-gradient-to-r from-[#7ea9f9] to-[#8b9eff] rounded-full py-3 text-white font-semibold flex justify-center items-center gap-2 shadow-[0_5px_10px_rgba(126,169,249,0.3)] text-sm"
+        >
+          <i class="fas fa-check"></i> Submit
+        </button>
+      </form>
+    </main>
+  </body>
+</html>
+{% endblock %}

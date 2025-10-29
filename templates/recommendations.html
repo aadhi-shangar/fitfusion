@@ -1,0 +1,607 @@
+{% extends "base.html" %}
+{% block title %}Diet & Workout Recommendations - FitFusion{% endblock %}
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<style>
+    :root {
+        --primary: #5B7CFA;
+        --primary-light: #8AA4FF;
+        --primary-dark: #3F5ED5;
+        --accent: #FF6B6B;
+        --accent-light: #FF9999;
+        --accent-dark: #E84A4A;
+        --success: #34C759;
+        --warning: #FFAA00;
+        --error: #FF3B30;
+        --text-dark: #1A202C;
+        --text-medium: #4A5568;
+        --text-light: #A0AEC0;
+        --bg-white: #FFFFFF;
+        --bg-light: #F7FAFC;
+        --bg-gradient: linear-gradient(135deg, #E9EFFF 0%, #D6E4FF 100%);
+        --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        --input-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        --border-radius-lg: 12px;
+        --border-radius-md: 8px;
+        --border-radius-sm: 6px;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-gradient);
+        color: var(--text-dark);
+        line-height: 1.6;
+        min-height: 100vh;
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    .section-container {
+        margin: 2rem 0;
+    }
+
+    .section-title {
+        font-family: 'Montserrat', sans-serif;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        position: relative;
+    }
+
+    .section-title::after {
+        content: '';
+        display: block;
+        width: 80px;
+        height: 3px;
+        background: var(--primary);
+        margin: 0.5rem auto;
+        border-radius: 2px;
+    }
+
+    .card {
+        background: var(--bg-white);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        animation: slideInUp 0.6s ease-out forwards;
+        opacity: 0;
+        border: 1px solid rgba(90, 124, 250, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header i {
+        font-size: 1.5rem;
+        color: var(--primary);
+        transition: transform 0.3s ease;
+    }
+
+    .card-header:hover i {
+        transform: scale(1.2);
+    }
+
+    .card-header h2 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .form-group {
+        position: relative;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.85rem 1rem 0.85rem 2.75rem;
+        border: none;
+        border-radius: var(--border-radius-md);
+        font-size: 0.95rem;
+        font-family: 'Inter', sans-serif;
+        background: #F8FAFF;
+        color: var(--text-dark);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 3px rgba(90, 124, 250, 0.2);
+        outline: none;
+    }
+
+    .form-icon {
+        position: absolute;
+        top: 40%;
+        left: 1rem;
+        transform: translateY(-50%);
+        color: var(--primary-light);
+        font-size: 1.1rem;
+        transition: color 0.3s ease;
+    }
+
+    .form-control:focus + .form-icon {
+        color: var(--primary-dark);
+    }
+
+    label {
+        position: absolute;
+        top: -0.6rem;
+        left: 1.5rem;
+        color: var(--primary-dark);
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: var(--bg-white);
+        padding: 0 0.3rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control::placeholder {
+        color: transparent;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.9rem;
+        border: none;
+        border-radius: var(--border-radius-md);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+    }
+
+    .btn-accent {
+        background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .btn i {
+        font-size: 0.95rem;
+        transition: transform 0.3s ease;
+    }
+
+    .btn:hover i {
+        transform: translateX(4px);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: var(--bg-white);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+        max-width: 500px;
+        width: 90%;
+        padding: 2rem;
+        animation: slideUp 0.5s ease-in-out;
+        position: relative;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--text-medium);
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: var(--primary);
+    }
+
+    .modal-content h2 {
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid rgba(90, 124, 250, 0.2);
+        padding-bottom: 0.75rem;
+        font-family: 'Montserrat', sans-serif;
+        font-size: clamp(1.25rem, 2vw, 1.5rem);
+        font-weight: 600;
+    }
+
+    .modal-content ul {
+        list-style-type: none;
+    }
+
+    .modal-content li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-content li:last-child {
+        border-bottom: none;
+        margin-top: 1rem;
+        font-weight: 600;
+    }
+
+    .modal-content li strong {
+        color: var(--primary);
+    }
+
+    .error-alert {
+        background: rgba(255, 59, 48, 0.05);
+        border-left: 4px solid var(--error);
+        color: var(--error);
+        padding: 0.75rem;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding: 0.5rem;
+        }
+
+        .container {
+            padding: 0 0.5rem;
+        }
+
+        .card {
+            padding: 1rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .card-header i {
+            font-size: 1.25rem;
+        }
+
+        .form-control {
+            font-size: 0.9rem;
+            padding: 0.7rem 0.9rem 0.7rem 2.5rem;
+        }
+
+        .form-icon {
+            font-size: 1rem;
+            left: 0.75rem;
+            top: 40%;
+        }
+
+        label {
+            font-size: 0.75rem;
+            left: 2.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .modal-content {
+            padding: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card-header h2 {
+            font-size: 1.1rem;
+        }
+
+        .form-control {
+            font-size: 0.85rem;
+        }
+
+        .btn {
+            font-size: 0.85rem;
+        }
+
+        .modal-content {
+            width: 95%;
+        }
+    }
+</style>
+
+<div class="container">
+    <!-- Diet Recommendation Section -->
+    <div class="section-container">
+        <h1 class="section-title">Diet Recommendation</h1>
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-utensils"></i>
+                <h2>Diet Plan Generator</h2>
+            </div>
+            <form method="POST" action="{{ url_for('recommend_diet') }}" id="diet-form" class="needs-validation" novalidate>
+                <div class="form-group">
+                    <i class="fas fa-user form-icon"></i>
+                    <input type="number" id="diet-age" name="age" class="form-control" placeholder=" " value="{{ user_data.age if user_data else '' }}" required min="1" max="120" aria-label="Age">
+                    <label for="diet-age">Age</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-venus-mars form-icon"></i>
+                    <select id="diet-gender" name="gender" class="form-control" required aria-label="Gender">
+                        <option value="" disabled {% if not user_data %}selected{% endif %}>Select Gender</option>
+                        <option value="Male" {% if user_data and user_data.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if user_data and user_data.gender == 'Female' %}selected{% endif %}>Female</option>
+                    </select>
+                    <label for="diet-gender">Gender</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-bullseye form-icon"></i>
+                    <select id="diet-goal" name="goal" class="form-control" required aria-label="Goal">
+                        <option value="" disabled {% if not user_data %}selected{% endif %}>Select Goal</option>
+                        <option value="Lose Weight" {% if user_data and user_data.goal == 'Lose Weight' %}selected{% endif %}>Lose Weight</option>
+                        <option value="Gain Muscle" {% if user_data and user_data.goal == 'Gain Muscle' %}selected{% endif %}>Gain Muscle</option>
+                        <option value="Maintain Weight" {% if user_data and user_data.goal == 'Maintain Weight' %}selected{% endif %}>Maintain Weight</option>
+                    </select>
+                    <label for="diet-goal">Goal</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-leaf form-icon"></i>
+                    <select id="diet-type" name="diet_type" class="form-control" required aria-label="Diet Type">
+                        <option value="" disabled selected>Select Diet Type</option>
+                        <option value="Vegan">Vegan</option>
+                        <option value="Vegetarian">Vegetarian</option>
+                        <option value="Non-Vegetarian">Non-Vegetarian</option>
+                        <option value="Eggetarian">Eggetarian</option>
+                    </select>
+                    <label for="diet-type">Diet Type</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-running form-icon"></i>
+                    <select id="diet-activity-level" name="activity_level" class="form-control" required aria-label="Activity Level">
+                        <option value="" disabled selected>Select Activity Level</option>
+                        <option value="Sedentary">Sedentary</option>
+                        <option value="Lightly Active">Lightly Active</option>
+                        <option value="Moderately Active">Moderately Active</option>
+                        <option value="Very Active">Very Active</option>
+                        <option value="Super Active">Super Active</option>
+                    </select>
+                    <label for="diet-activity-level">Activity Level</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-allergies form-icon"></i>
+                    <input type="text" id="diet-allergies" name="allergies" class="form-control" placeholder=" " value="None" aria-label="Allergies">
+                    <label for="diet-allergies">Allergies (e.g., Nuts, Lactose or None)</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-notes-medical form-icon"></i>
+                    <input type="text" id="diet-medical-conditions" name="medical_conditions" class="form-control" placeholder=" " value="None" aria-label="Medical Conditions">
+                    <label for="diet-medical-conditions">Medical Conditions (e.g., Diabetes, PCOS or None)</label>
+                </div>
+                <button type="submit" class="btn btn-primary" onclick="showModal('dietModal')">Get Diet Plan <i class="fas fa-arrow-right"></i></button>
+            </form>
+        </div>
+
+        {% if diet_error %}
+        <div class="error-alert">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>{{ diet_error }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Workout Recommendation Section -->
+    <div class="section-container">
+        <h1 class="section-title">Workout Recommendation</h1>
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-dumbbell"></i>
+                <h2>Workout Plan Generator</h2>
+            </div>
+            <form method="POST" action="{{ url_for('recommend_workout') }}" id="workout-form" class="needs-validation" novalidate>
+                <div class="form-group">
+                    <i class="fas fa-user form-icon"></i>
+                    <input type="number" id="workout-age" name="age" class="form-control" placeholder=" " value="{{ user_data.age if user_data else '' }}" required min="1" max="120" aria-label="Age">
+                    <label for="workout-age">Age</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-venus-mars form-icon"></i>
+                    <select id="workout-gender" name="gender" class="form-control" required aria-label="Gender">
+                        <option value="" disabled {% if not user_data %}selected{% endif %}>Select Gender</option>
+                        <option value="Male" {% if user_data and user_data.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if user_data and user_data.gender == 'Female' %}selected{% endif %}>Female</option>
+                    </select>
+                    <label for="workout-gender">Gender</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-level-up-alt form-icon"></i>
+                    <select id="fitness-level" name="fitness_level" class="form-control" required aria-label="Fitness Level">
+                        <option value="" disabled selected>Select Fitness Level</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                    <label for="fitness-level">Fitness Level</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-bullseye form-icon"></i>
+                    <select id="workout-goal" name="goal" class="form-control" required aria-label="Goal">
+                        <option value="" disabled selected>Select Goal</option>
+                        <option value="Strength">Strength</option>
+                        <option value="Endurance">Endurance</option>
+                        <option value="Flexibility">Flexibility</option>
+                        <option value="Weight Loss">Weight Loss</option>
+                    </select>
+                    <label for="workout-goal">Goal</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-map-marker-alt form-icon"></i>
+                    <select id="workout-preference" name="preference" class="form-control" required aria-label="Workout Preference">
+                        <option value="" disabled selected>Select Preference</option>
+                        <option value="Home">Home</option>
+                        <option value="Gym">Gym</option>
+                        <option value="Outdoor">Outdoor</option>
+                    </select>
+                    <label for="workout-preference">Workout Preference</label>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-clock form-icon"></i>
+                    <input type="number" id="workout-time" name="time" class="form-control" placeholder=" " value="60" required min="10" max="240" aria-label="Workout Time">
+                    <label for="workout-time">Workout Time per Day (minutes)</label>
+                </div>
+                <button type="submit" class="btn btn-accent" onclick="showModal('workoutModal')">Get Workout Plan <i class="fas fa-arrow-right"></i></button>
+            </form>
+        </div>
+
+        {% if workout_error %}
+        <div class="error-alert">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>{{ workout_error }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Diet Recommendation Modal -->
+    <div class="modal" id="dietModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('dietModal')">×</button>
+            {% if diet_recommendation %}
+            <h2>Your Personalized Diet Plan</h2>
+            <ul>
+                {% for meal, details in diet_recommendation.items() %}
+                {% if meal != 'Total Calories' and details.Meal != 'None' %}
+                <li><strong>{{ meal }}</strong>: {{ details.Meal }} ({{ details.Calories }} kcal)</li>
+                {% endif %}
+                {% endfor %}
+                <li><strong>Total Daily Calories</strong>: {{ diet_recommendation['Total Calories'] }} kcal</li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Workout Recommendation Modal -->
+    <div class="modal" id="workoutModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('workoutModal')">×</button>
+            {% if workout_recommendation %}
+            <h2>Your Personalized Workout Plan</h2>
+            <ul>
+                <li><strong>Workout Type</strong>: {{ workout_recommendation.Workout_Type }}</li>
+                <li><strong>Exercises</strong>:
+                    <ul>
+                        {% for exercise in workout_recommendation.Exercises %}
+                        <li>{{ exercise }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li><strong>Duration</strong>: {{ workout_recommendation.Duration }} minutes</li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('.needs-validation');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const dietModal = document.getElementById('dietModal');
+        const workoutModal = document.getElementById('workoutModal');
+        if (event.target === dietModal) {
+            dietModal.style.display = 'none';
+        }
+        if (event.target === workoutModal) {
+            workoutModal.style.display = 'none';
+        }
+    };
+</script>
+<script src="{{ url_for('static', filename='js/recommendations.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,702 @@
+{% extends "base.html" %}
+{% block title %}Profile - FitFusion{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profile - FitFusion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    :root {
+      --primary: #5B7CFA;
+      --primary-light: #8AA4FF;
+      --primary-dark: #3F5ED5;
+      --accent: #FF6B6B;
+      --text-dark: #1A202C;
+      --text-light: #A0AEC0;
+      --bg-white: #FFFFFF;
+      --bg-light: #F7FAFC;
+      --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      --modal-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      --gradient-bg: linear-gradient(135deg, #F7FAFC 0%, #E6EEFF 100%);
+      --scrollbar-track: #E6EEFF;
+      --scrollbar-thumb: #8AA7FF;
+    }
+    .card {
+      background: var(--bg-white);
+      border-radius: 1rem;
+      box-shadow: var(--card-shadow);
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(135deg, #8AA7FF 0%, #A3B8FF 100%);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+    .card h2 {
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+    }
+
+   
+    .avatar-container {
+      position: relative;
+      display: inline-block;
+    }
+    .avatar-edit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: var(--primary);
+      color: white;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease;
+    }
+    .avatar-edit:hover {
+      transform: scale(1.1);
+    }
+    .edit-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--bg-white);
+      color: var(--primary);
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.25rem;
+      border: 2px solid var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .edit-icon:hover {
+      transform: scale(1.1);
+      background: var(--primary-light);
+      color: var(--bg-white);
+    }
+    .modal {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    .modal:not(.hidden) {
+      transform: scale(1);
+      opacity: 1;
+    }
+    .modal-content {
+      background: var(--gradient-bg);
+      border-radius: 1.5rem;
+      box-shadow: var(--modal-shadow);
+      padding: 1.75rem;
+      position: relative;
+      max-height: 85vh;
+      overflow: hidden;
+      max-width: 90%;
+      width: 24rem;
+      border: 1px solid rgba(138, 167, 255, 0.2);
+    }
+    .modal-body {
+      max-height: calc(85vh - 7rem);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      margin-right: -0.5rem;
+    }
+    .modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+    .modal-body::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+      border-radius: 4px;
+    }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
+    }
+    .modal-body {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .modal-icon {
+      background: var(--primary);
+      color: white;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+    .modal-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: transparent;
+      color: var(--text-dark);
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .modal-close:hover {
+      background: rgba(0, 0, 0, 0.05);
+      transform: scale(1.1);
+    }
+    .form-group {
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+      transition: color 0.2s ease;
+    }
+    .form-group select,
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="date"],
+    .form-group input[type="number"],
+    .form-group input[type="file"] {
+      border: 1px solid #E2E8F0;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      width: 100%;
+      font-size: 0.875rem;
+      background: white;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-group select:focus,
+    .form-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(138, 167, 255, 0.2);
+      outline: none;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-dark);
+    }
+    .checkbox-label::before {
+      content: '';
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid var(--primary-light);
+      border-radius: 0.25rem;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    input[type="checkbox"]:checked + .checkbox-label::before {
+      background: var(--primary);
+      border-color: var(--primary);
+      content: '\f00c';
+      font-family: 'Font Awesome 5 Free';
+      font-weight: 900;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    input[type="checkbox"] {
+      display: none;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 6rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #8AA7FF 0%, #A3B8FF 100%);
+      color: white;
+    }
+    .btn-secondary {
+      background: #EDF2F7;
+      color: var(--text-dark);
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .logout-btn {
+      background: var(--accent);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .logout-btn:hover {
+      background: #E55A5A;
+      transform: translateY(-2px);
+    }
+    .logout-btn:active {
+      transform: translateY(0);
+    }
+
+      .avatar-edit, .edit-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 0.75rem;
+      }
+      .card {
+        padding: 1rem;
+      }
+      .card h2 {
+        font-size: 1rem;
+      }
+      .modal-content {
+        padding: 1.25rem;
+        width: 95%;
+        max-width: 20rem;
+        border-radius: 1.25rem;
+      }
+      .modal-body {
+        max-height: calc(85vh - 6rem);
+        padding-right: 0.25rem;
+        margin-right: -0.25rem;
+      }
+      .modal-body::-webkit-scrollbar {
+        width: 6px;
+      }
+      .modal-icon {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+      }
+      .modal-header h2 {
+        font-size: 1.125rem;
+      }
+      .form-group select,
+      .form-group input {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+      }
+      .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+        min-width: 5rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-900 min-h-screen flex flex-col justify-between">
+  <div class="px-5 pt-6 pb-24 max-w-md mx-auto w-full">
+    <!-- Profile Info -->
+    <section class="flex items-center gap-4 mb-6">
+      <div class="avatar-container">
+        <img id="avatar" class="w-14 h-14 rounded-full object-cover" src="{{ they_data.avatar_url if user_data and user_data.avatar_url else 'https://storage.googleapis.com/a1aa/image/19fc3159-a7a4-40ea-5271-319739d2642a.jpg' }}" alt="Avatar" />
+        <label for="avatarInput" class="avatar-edit" title="Change Profile Photo">
+          <i class="fas fa-pen"></i>
+        </label>
+      </div>
+      <div class="flex-1">
+        <p id="profileName" class="font-semibold text-gray-900 text-base leading-5">{{ name }}</p>
+        <p class="text-gray-500 text-sm leading-5">Fitness Enthusiast</p>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="flex justify-between mb-6">
+      <div class="flex flex-col items-center bg-white rounded-xl shadow-[0_4px_10px_rgba(138,167,255,0.15)] w-1/3 py-4 transition-all hover:shadow-[0_6px_15px_rgba(138,167,255,0.25)]">
+        <p id="profileHeight" class="text-[#8AA7FF] font-semibold text-lg">{{ user_data.height }} cm</p>
+        <p class="text-gray-500 text-xs">Height</p>
+      </div>
+      <div class="flex flex-col items-center bg-white rounded-xl shadow-[0_4px_10px_rgba(138,167,255,0.15)] w-1/3 py-4 mx-2 transition-all hover:shadow-[0_6px_15px_rgba(138,167,255,0.25)]">
+        <p id="profileWeight" class="text-[#8AA7FF] font-semibold text-lg">{{ user_data.weight }} kg</p>
+        <p class="text-gray-500 text-xs">Weight</p>
+      </div>
+      <div class="flex flex-col items-center bg-white rounded-xl shadow-[0_4px_10px_rgba(138,167,255,0.15)] w-1/3 py-4 transition-all hover:shadow-[0_6px_15px_rgba(138,167,255,0.25)]">
+        <p id="profileAge" class="text-[#8AA7FF] font-semibold text-lg">{{ user_data.age }}</p>
+        <p class="text-gray-500 text-xs">Age</p>
+      </div>
+    </section>
+
+    <!-- Account Section -->
+    <section class="card mb-6 relative">
+      <h2>Account</h2>
+      <span class="edit-icon" onclick="openModal('editProfileModal')" title="Edit Personal Information">
+        <i class="fas fa-pen"></i>
+      </span>
+      <ul class="space-y-2">
+        <li onclick="toggleDetails('personalDetails', 'arrowIcon')" class="flex items-center justify-between cursor-pointer text-gray-600 text-sm leading-5">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-user text-[#8AA7FF] text-lg"></i>
+            <span>Personal Data</span>
+          </div>
+          <i class="fas fa-chevron-down text-gray-400" id="arrowIcon"></i>
+        </li>
+        <div id="personalDetails" class="mt-3 hidden text-sm text-gray-600 space-y-2 pl-8">
+          <p><strong>Name:</strong> {{ name }}</p>
+          <p><strong>Phone:</strong> {{ user_data.phone }}</p>
+          <p><strong>Email:</strong> {{ user_data.email }}</p>
+          <p><strong>DOB:</strong> {{ user_data.dob }}</p>
+          <p><strong>Height:</strong> {{ user_data.height }} cm</p>
+          <p><strong>Weight:</strong> {{ user_data.weight }} kg</p>
+          <p><strong>Age:</strong> {{ user_data.age }}</p>
+        </div>
+      </ul>
+    </section>
+
+    <!-- Notification Section -->
+    <section class="card mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="far fa-bell text-[#8AA7FF] text-lg"></i>
+        <span class="text-gray-600 text-sm leading-5">Pop-up Notification</span>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" name="notifications" id="notifications" class="sr-only peer" {% if user_data.notifications %}checked{% endif %}>
+        <div class="w-11 h-6 bg-gradient-to-r from-[#8AA7FF] to-[#A3B8FF] rounded-full peer peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+      </label>
+    </section>
+
+    <!-- Other Section -->
+    <section class="card mb-6">
+      <h2>Other</h2>
+      <ul class="space-y-2">
+        <li onclick="openModal('contactModal')" class="flex items-center justify-between cursor-pointer text-gray-600 text-sm leading-5">
+          <div class="flex items-center gap-3">
+            <i class="far fa-envelope text-[#8AA7FF] text-lg"></i>
+            <span>Contact Us</span>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </li>
+        <li onclick="openModal('privacyModal')" class="flex items-center justify-between cursor-pointer text-gray-600 text-sm leading-5">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-shield-alt text-[#8AA7FF] text-lg"></i>
+            <span>Privacy Policy</span>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </li>
+        <li onclick="openModal('settingsModal')" class="flex items-center justify-between cursor-pointer text-gray-600 text-sm leading-5">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-cog text-[#8AA7FF] text-lg"></i>
+            <span>Settings</span>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </li>
+        <li class="flex items-center justify-between cursor-pointer text-gray-600 text-sm leading-5">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-sign-out-alt text-[#8AA7FF] text-lg"></i>
+            <a href="{{ url_for('logout') }}" class="nav-link logout">Logout</a>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+
+  <!-- Edit Profile Modal -->
+  <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('editProfileModal')"><i class="fas fa-times"></i></button>
+      <div class="modal-header">
+        <span class="modal-icon"><i class="fas fa-user-edit"></i></span>
+        <h2 class="text-lg font-semibold text-gray-800">Update Profile</h2>
+      </div>
+      <div class="modal-body">
+        <form id="editProfileForm" method="POST" action="{{ url_for('update_profile') }}">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" value="{{ name }}" required />
+          </div>
+          <div class="form-group">
+            <label for="height">Height (cm)</label>
+            <input type="number" id="height" name="height" value="{{ user_data.height }}" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label for="weight">Weight (kg)</label>
+            <input type="number" id="weight" name="weight" value="{{ user_data.weight }}" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" value="{{ user_data.age }}" />
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" name="phone" value="{{ user_data.phone }}" />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ user_data.email }}" />
+          </div>
+          <div class="form-group">
+            <label for="dob">Date of Birth</label>
+            <input type="date" id="dob" name="dob" value="{{ user_data.dob }}" />
+          </div>
+          <div class="flex justify-between mt-6 gap-2">
+            <button type="button" onclick="closeModal('editProfileModal')" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+        </form>
+        <!-- <form id="avatarForm" method="POST" action="{{ url_for('update_avatar') }}" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="avatar">Upload Avatar</label>
+            <input type="file" id="avatarInput" name="avatar" accept="image/*" />
+          </div>
+          <div class="flex justify-between mt-6 gap-2">
+            <button type="button" onclick="closeModal('editProfileModal')" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Upload</button>
+          </div>
+        </form> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Us Modal -->
+  <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('contactModal')"><i class="fas fa-times"></i></button>
+      <div class="modal-header">
+        <span class="modal-icon"><i class="far fa-envelope"></i></span>
+        <h2 class="text-lg font-semibold text-gray-800">Contact Us</h2>
+      </div>
+      <div class="modal-body">
+        <div class="content-section">
+          <p class="text-sm text-gray-600 mb-4">Reach out to FitFusion for support or inquiries:</p>
+          <ul class="text-sm text-gray-600 space-y-3">
+            <li class="flex items-center gap-3">
+              <i class="fas fa-envelope text-[#8AA7FF]"></i>
+              <span><strong>Email:</strong> support@fitfusionapp.com</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <i class="fas fa-phone text-[#8AA7FF]"></i>
+              <span><strong>Phone:</strong> +1 (800) 555-1234</span>
+            </li>
+            <li class="flex items-center gap-3">
+              <i class="fas fa-map-marker-alt text-[#8AA7FF]"></i>
+              <span><strong>Address:</strong> 123 Wellness Way, Suite 100, Fitness City, FC 90210, USA</span>
+            </li>
+          </ul>
+        </div>
+        <button onclick="closeModal('contactModal')" class="btn btn-secondary w-full mt-4">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Privacy Policy Modal -->
+  <div id="privacyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('privacyModal')"><i class="fas fa-times"></i></button>
+      <div class="modal-header">
+        <span class="modal-icon"><i class="fas fa-shield-alt"></i></span>
+        <h2 class="text-lg font-semibold text-gray-800">Privacy Policy</h2>
+      </div>
+      <div class="modal-body">
+        <div class="content-section">
+          <p class="text-sm text-gray-600"><strong>Effective Date:</strong> May 15, 2025</p>
+          <p class="text-sm text-gray-600 mt-2">FitFusion ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our fitness application.</p>
+        </div>
+        <div class="content-section">
+          <h3>1. Information We Collect</h3>
+          <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+            <li><strong>Personal Information:</strong> Name, email, phone number, date of birth, and other information you provide during registration or profile updates.</li>
+            <li><strong>Fitness Data:</strong> Height, weight, age, fitness goals, workout history, and dietary preferences.</li>
+            <li><strong>Usage Data:</strong> App interactions, IP address, device type, and browsing patterns.</li>
+            <li><strong>Media:</strong> Profile photos uploaded by you.</li>
+          </ul>
+        </div>
+        <div class="content-section">
+          <h3>2. How We Use Your Information</h3>
+          <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+            <li>Provide personalized fitness and diet recommendations.</li>
+            <li>Improve app functionality and user experience.</li>
+            <li>Send notifications and updates (if enabled).</li>
+            <li>Analyze usage trends for service enhancements.</li>
+          </ul>
+        </div>
+        <div class="content-section">
+          <h3>3. Sharing Your Information</h3>
+          <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+            <li>Service providers for app hosting and analytics.</li>
+            <li>Legal authorities if required by law.</li>
+          </ul>
+        </div>
+        <div class="content-section">
+          <h3>4. Data Security</h3>
+          <p class="text-sm text-gray-600">We implement industry-standard measures (e.g., encryption, access controls) to protect your data. However, no system is completely secure, and we cannot guarantee absolute security.</p>
+        </div>
+        <div class="content-section">
+          <h3>5. Your Rights</h3>
+          <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
+            <li>Access, update, or delete your personal information via your profile settings.</li>
+            <li>Opt out of notifications in the app.</li>
+            <li>Contact us at support@fitfusionapp.com for data requests.</li>
+          </ul>
+        </div>
+        <div class="content-section">
+          <h3>6. Cookies and Tracking</h3>
+          <p class="text-sm text-gray-600">We use cookies to enhance app performance and track usage. You can manage cookie preferences in your device settings.</p>
+        </div>
+        <div class="content-section">
+          <h3>7plicant. Changes to This Policy</h3>
+          <p class="text-sm text-gray-600">We may update this policy periodically. Changes will be posted in the app, and continued use constitutes acceptance.</p>
+        </div>
+        <div class="content-section">
+          <h3>8. Contact Us</h3>
+          <p class="text-sm text-gray-600">For questions, contact us at support@fitfusionapp.com or +1 (800) 555-1234.</p>
+        </div>
+        <button onclick="closeModal('privacyModal')" class="btn btn-secondary w-full mt-4">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('settingsModal')"><i class="fas fa-times"></i></button>
+      <div class="modal-header">
+        <span class="modal-icon"><i class="fas fa-cog"></i></span>
+        <h2 class="text-lg font-semibold text-gray-800">Settings</h2>
+      </div>
+      <div class="modal-body">
+        <div class="content-section">
+          <p class="text-sm text-gray-600 mb-4">Customize your FitFusion experience:</p>
+          <form id="settingsForm" method="POST" action="{{ url_for('update_settings') }}">
+            <div class="form-group">
+              <label for="theme">Theme</label>
+              <select id="theme" name="theme">
+                <option value="light" {% if user_data.theme == 'light' %}selected{% endif %}>Light</option>
+                <option value="dark" {% if user_data.theme == 'dark' %}selected{% endif %}>Dark</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="language">Language</label>
+              <select id="language" name="language">
+                <option value="en" {% if user_data.language == 'en' %}selected{% endif %}>English</option>
+                <option value="es" {% if user_data.language == 'es' %}selected{% endif %}>Spanish</option>
+                <option value="fr" {% if user_data.language == 'fr' %}selected{% endif %}>French</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="notification_frequency">Notification Frequency</label>
+              <select id="notification_frequency" name="notification_frequency">
+                <option value="daily" {% if user_data.notification_frequency == 'daily' %}selected{% endif %}>Daily</option>
+                <option value="weekly" {% if user_data.notification_frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                <option value="none" {% if user_data.notification_frequency == 'none' %}selected{% endif %}>None</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="units">Units</label>
+              <select id="units" name="units">
+                <option value="metric" {% if user_data.units == 'metric' %}selected{% endif %}>Metric (cm, kg)</option>
+                <option value="imperial" {% if user_data.units == 'imperial' %}selected{% endif %}>Imperial (in, lbs)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <input type="checkbox" id="data_sharing" name="data_sharing" {% if user_data.data_sharing %}checked{% endif %}>
+              <label for="data_sharing" class="checkbox-label">Allow anonymized data sharing for analytics</label>
+            </div>
+            <div class="form-group">
+              <input type="checkbox" id="auto_sync" name="auto_sync" {% if user_data.auto_sync %}checked{% endif %}>
+              <label for="auto_sync" class="checkbox-label">Enable auto-sync with fitness wearables</label>
+            </div>
+            <div class="flex justify-between mt-6 gap-2">
+              <button type="button" onclick="closeModal('settingsModal')" class="btn btn-secondary">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.add('hidden');
+    }
+
+    function toggleDetails(detailsId, arrowId) {
+      const details = document.getElementById(detailsId);
+      const arrow = document.getElementById(arrowId);
+      details.classList.toggle('hidden');
+      arrow.classList.toggle('fa-chevron-down');
+      arrow.classList.toggle('fa-chevron-up');
+    }
+
+    document.getElementById('settingsForm').addEventListener('submit', function(event) {
+      const theme = document.getElementById('theme').value;
+      if (!theme) {
+        event.preventDefault();
+        alert('Please select a theme.');
+      }
+    });
+
+    document.getElementById('avatarInput').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('avatar').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+</body>
+</html>
+{% endblock %}

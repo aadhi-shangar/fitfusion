@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>FitBot Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  .typing {
+    border-right: 2px solid;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink {
+    from, to { border-color: transparent }
+    50% { border-color: black; }
+  }
+  .chat-bubble {
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 1.5rem;
+    border-bottom-right-radius: 1.5rem;
+    border-bottom-left-radius: 1.5rem;
+  }
+  .user-bubble {
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 0.75rem;
+    border-bottom-right-radius: 1.5rem;
+    border-bottom-left-radius: 1.5rem;
+  }
+  #chat-form {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  #user-input {
+    flex-grow: 1;
+    height: 48px;
+  }
+  button[type="submit"] {
+    height: 48px;
+    width: 48px;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+  }
+  footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 10;
+  }
+</style>
+</head>
+<body class="bg-white min-h-screen flex flex-col justify-between">
+  <header class="flex items-center px-6 py-4">
+    <div class="flex items-center space-x-4">
+      <button aria-label="Back" onclick="window.location.href='/home'" class="w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 text-2xl">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+          <img alt="Blue robot icon representing FitBot" class="w-5 h-5" draggable="false" height="20" src="https://storage.googleapis.com/a1aa/image/e081f2c9-26af-429d-438d-cb81fd4fd254.jpg" width="20"/>
+        </div>
+        <div class="leading-tight">
+          <p class="font-semibold text-black text-base">FitBot</p>
+          <p class="text-gray-600 text-sm flex items-center space-x-1">
+            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+            <span>Always active</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="flex-grow"></div>
+  </header>
+
+  <main class="px-6 flex-1 overflow-y-auto py-4" id="chat-container">
+    <!-- Chat messages will be added here -->
+  </main>
+
+  <footer class="px-6 py-4">
+    <form id="chat-form" class="flex items-center max-w-full">
+      <input id="user-input" aria-label="Ask anything" class="border border-gray-300 rounded-full py-3 px-5 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Type your message..." type="text" required/>
+      <button aria-label="Send message" class="rounded-full bg-gray-700 flex items-center justify-center text-white" type="submit">
+        <img alt="Send message" class="w-5 h-5" src="https://img.icons8.com/?size=100&id=ZznWGhUzgWtS&format=png&color=000000"/>
+      </button>
+    </form>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const chatContainer = document.getElementById('chat-container');
+      const chatForm = document.getElementById('chat-form');
+      const userInput = document.getElementById('user-input');
+      
+      const introMessage = "Hello, I'm FitBot! Your personal assistant. How can I help you?";
+      
+      function typeMessage(message, sender, callback) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex items-start max-w-[320px] my-2 ${sender === 'bot' ? 'mr-auto' : 'ml-auto justify-end'}`;
+        
+        if (sender === 'bot') {
+          messageDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-1">
+              <img alt="Small blue robot icon representing FitBot" class="w-4 h-4" draggable="false" height="16" src="https://storage.googleapis.com/a1aa/image/6234755c-2e69-4133-8577-0c6898afbe6b.jpg" width="16"/>
+            </div>
+            <p class="bg-gray-100 text-gray-900 text-base rounded-2xl py-3 px-4 leading-relaxed chat-bubble ml-2">
+              <span id="typing-text"></span>
+            </p>
+          `;
+        } else {
+          messageDiv.innerHTML = `
+            <p class="bg-blue-500 text-white text-base rounded-2xl py-3 px-4 leading-relaxed user-bubble">
+              ${message}
+            </p>
+          `;
+        }
+        
+        chatContainer.appendChild(messageDiv);
+        
+        if (sender === 'bot') {
+          const typingText = messageDiv.querySelector('#typing-text');
+          let i = 0;
+          const typingInterval = setInterval(() => {
+            if (i < message.length) {
+              typingText.textContent += message.charAt(i);
+              i++;
+            } else {
+              clearInterval(typingInterval);
+              if (callback) callback();
+            }
+          }, 30);
+        }
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+      
+      setTimeout(() => {
+        typeMessage(introMessage, 'bot');
+      }, 500);
+      
+      chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const message = userInput.value.trim();
+        if (message) {
+          typeMessage(message, 'user');
+          userInput.value = '';
+          
+          try {
+            const response = await fetch('/api/chatbot', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message })
+            });
+            const data = await response.json();
+            if (response.ok) {
+              typeMessage(data.response, 'bot');
+            } else {
+              typeMessage('Sorry, something went wrong. Please try again.', 'bot');
+            }
+          } catch (error) {
+            typeMessage('Error connecting to the server.', 'bot');
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

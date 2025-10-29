@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% block title %}Progress - FitFusion{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #E6EEFF, white);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+        .animate-circle {
+            animation: draw 1s ease-in-out forwards;
+        }
+        .card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        .progress-circle {
+            transition: stroke-dasharray 0.5s ease-in-out;
+        }
+        .icon-hover {
+            transition: transform 0.2s;
+        }
+        .icon-hover:hover {
+            transform: rotate(10deg) scale(1.2);
+        }
+        .modal-content {
+            overflow: hidden;
+        }
+        .modal-body {
+            overflow-y: auto;
+            max-height: 70vh;
+            scrollbar-width: thin;
+            scrollbar-color: #8AA7FF #E6EEFF;
+        }
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: #E6EEFF;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background-color: #8AA7FF;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-md mx-auto p-6">
+        <h1 class="text-3xl font-bold text-[#2B3674] text-center mb-10 animate-fade-in">Your Progress</h1>
+
+        <!-- Steps Card -->
+        <div class="bg-gradient-to-b from-white to-[#F7FAFF] rounded-xl shadow-sm border border-[#E6EEFF] p-6 mb-10 card animate-fade-in cursor-pointer" onclick="showGraph('steps')">
+            <p class="text-lg text-[#2B3674] font-medium text-center">
+                Today's Steps: <span class="text-[#8AA7FF] font-bold">{{ user_data.steps_count | int }}</span>
+            </p>
+            <div class="relative mt-6 flex justify-center">
+                <svg class="w-60 h-60" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="80" cy="80" r="70" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round" />
+                    <circle id="progress-circle" class="progress-circle animate-circle" cx="80" cy="80" r="70"
+                        stroke="url(#grad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="439.82 439.82"
+                        stroke-dashoffset="50" transform="rotate(-90 80 80)" />
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#8AA7FF" />
+                            <stop offset="100%" style="stop-color:#6B8EFF" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                    <i class="fas fa-shoe-prints text-[#8AA7FF] text-5xl mb-3 icon-hover"></i>
+                    <span class="text-[#8AA7FF] font-bold text-4xl leading-none">{{ user_data.steps_count | int }}</span>
+                    <span class="text-[#4B5EAA] text-base mt-1">Steps</span>
+                    <span class="text-[#2B3674] font-semibold text-lg mt-1" id="step-percentage">0%</span>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-between items-center">
+                <div class="w-1/2 pr-2">
+                    <p class="text-sm text-gray-500 text-center">Calories Burned</p>
+                    <p class="text-xl font-bold text-[#2B3674] text-center">{{ user_data.workout_calories | int }} <span class="text-base font-normal">Cal</span></p>
+                </div>
+                <div class="w-1/2 pl-2">
+                    <p class="text-sm text-gray-500 text-center">Daily Goal</p>
+                    <input id="step-goal" type="number" min="1" value="{{ user_data.steps_goal | int }}"
+                        class="w-full text-center text-xl font-bold text-[#2B3674] border-[#E6EEFF] rounded-lg focus:ring-[#8AA7FF] focus:border-[#8AA7FF] bg-[#F7FAFF]"
+                        placeholder="Enter step goal">
+                    <span class="text-base font-normal text-gray-500 block text-center">Steps</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Grid -->
+        <div class="grid grid-cols-2 gap-6 mb-10">
+            <!-- Weight Card -->
+            <div class="bg-gradient-to-b from-white to-[#F7FAFF] rounded-xl shadow-sm border border-[#E6EEFF] p-4 card animate-fade-in cursor-pointer" onclick="showGraph('weight')">
+                <div class="text-center">
+                    <span class="text-[#2B3674] font-medium text-sm">Weight</span>
+                    <div class="mt-2">
+                        <span class="text-3xl font-bold text-[#8AA7FF]">{{ user_data.weight | default(history.weight[-1].value if history.weight else 0, true) }}</span>
+                        <p class="text-gray-500 text-sm mt-1">kg</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Water Card -->
+            <div class="bg-gradient-to-b from-white to-[#F7FAFF] rounded-xl shadow-sm border border-[#E6EEFF] p-4 card animate-fade-in cursor-pointer" onclick="showGraph('water')">
+                <div class="text-center">
+                    <span class="text-[#2B3674] font-medium text-sm">Water</span>
+                    <div class="mt-2">
+                        <span class="text-3xl font-bold text-[#8AA7FF]">{{ user_data.water_intake | default(history.water[-1].value if history.water else 0, true) }}</span>
+                        <p class="text-gray-500 text-sm mt-1">Liters</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Workout Card -->
+            <div class="bg-gradient-to-b from-white to-[#F7FAFF] rounded-xl shadow-sm border border-[#E6EEFF] p-4 card animate-fade-in cursor-pointer" onclick="showGraph('workout')">
+                <div class="text-center">
+                    <span class="text-[#2B3674] font-medium text-sm">Workout</span>
+                    <div class="mt-2">
+                        <span class="text-3xl font-bold text-[#8AA7FF]">{{ user_data.workout_calories | default(history.workout[-1].value if history.workout else 0, true) }}</span>
+                        <p class="text-gray-500 text-sm mt-1">Kcal</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Sleep Card -->
+            <div class="bg-gradient-to-b from-white to-[#F7FAFF] rounded-xl shadow-sm border border-[#E6EEFF] p-4 card animate-fade-in cursor-pointer" onclick="showGraph('sleep')">
+                <div class="text-center">
+                    <span class="text-[#2B3674] font-medium text-sm">Sleep</span>
+                    <div class="mt-2">
+                        <span class="text-3xl font-bold text-[#F4D35E]">{{ user_data.sleep_duration | default(history.sleep[-1].value if history.sleep else 0, true) }}</span>
+                        <p class="text-gray-500 text-sm mt-1">Hours</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Modal -->
+    <div id="graphModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="modal-content bg-white rounded-xl w-11/12 max-w-md shadow-lg relative">
+            <div class="modal-body p-6">
+                <button onclick="closeModal('graphModal')" class="absolute top-4 right-4 text-[#2B3674] hover:text-[#8AA7FF]">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+                <h2 id="graphTitle" class="text-lg font-semibold text-[#2B3674] text-center mb-4"></h2>
+                <div class="bg-gradient-to-b from-white to-[#F7FAFF] rounded-xl shadow-sm border border-[#E6EEFF] p-4 card">
+                    <div class="chart-container">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <button id="viewHistoryBtn" onclick="toggleHistory()"
+                        class="bg-[#8AA7FF] text-white py-2 px-4 rounded-lg hover:bg-[#6B8EFF] focus:outline-none focus:ring-2 focus:ring-[#8AA7FF]">
+                        View History
+                    </button>
+                </div>
+                <ul id="historyList" class="mt-4 hidden"></ul>
+                <button onclick="closeModal('graphModal')"
+                    class="w-full bg-[#E6EEFF] text-[#2B3674] py-2 px-4 rounded-lg hover:bg-[#D4DEFF] focus:outline-none focus:ring-2 focus:ring-[#8AA7FF] mt-4">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current date (May 19, 2025)
+        const today = new Date('2025-05-19');
+        const oneDay = 24 * 60 * 60 * 1000;
+        const sevenDaysAgo = new Date(today - 7 * oneDay);
+
+        // History data from Flask
+        const historyData = {
+            weight: [{% for entry in history.weight %}{date: '{{ entry.date }}', value: {{ entry.value }}}{% if not loop.last %},{% endif %}{% endfor %}],
+            water: [{% for entry in history.water %}{date: '{{ entry.date }}', value: {{ entry.value }}}{% if not loop.last %},{% endif %}{% endfor %}],
+            steps: [{% for entry in history.steps %}{date: '{{ entry.date }}', value: {{ entry.value }}}{% if not loop.last %},{% endif %}{% endfor %}],
+            workout: [{% for entry in history.workout %}{date: '{{ entry.date }}', value: {{ entry.value }}}{% if not loop.last %},{% endif %}{% endfor %}],
+            sleep: [{% for entry in history.sleep %}{date: '{{ entry.date }}', value: {{ entry.value }}}{% if not loop.last %},{% endif %}{% endfor %}]
+        };
+
+        // Filter last 7 days
+        function filterLastSevenDays(entries) {
+            return entries
+                .map(entry => ({
+                    date: new Date(entry.date),
+                    value: entry.value
+                }))
+                .filter(entry => {
+                    console.log('Filtering date:', entry.date);
+                    return entry.date >= sevenDaysAgo && entry.date <= today;
+                })
+                .sort((a, b) => a.date - b.date)
+                .map(entry => ({
+                    date: entry.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+                    value: entry.value
+                }));
+        }
+
+        // Modal handling
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Toggle history list
+        function toggleHistory() {
+            const historyList = document.getElementById('historyList');
+            const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+            historyList.classList.toggle('hidden');
+            viewHistoryBtn.textContent = historyList.classList.contains('hidden') ? 'View History' : 'Hide History';
+        }
+
+        // Chart.js Configuration
+        let chartInstance = null;
+        const chartConfig = {
+            type: 'line',
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1,
+                scales: {
+                    x: {
+                        display: true,
+                        ticks: { color: '#4B5EAA', font: { size: 10 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        display: true,
+                        ticks: { color: '#4B5EAA', font: { size: 10 } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        };
+
+        // Show graph for selected metric
+        function showGraph(metric) {
+            const graphModal = document.getElementById('graphModal');
+            const graphTitle = document.getElementById('graphTitle');
+            const historyList = document.getElementById('historyList');
+            const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+            const canvas = document.getElementById('historyChart');
+            const ctx = canvas.getContext('2d');
+
+            // Clear previous chart
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Set title and show modal
+            const titles = {
+                weight: 'Weight History',
+                water: 'Water History',
+                steps: 'Steps History',
+                workout: 'Workout History',
+                sleep: 'Sleep History'
+            };
+            const units = {
+                weight: 'kg',
+                water: 'Liters',
+                steps: 'Steps',
+                workout: 'Kcal',
+                sleep: 'Hours'
+            };
+            const colors = {
+                weight: '#8AA7FF',
+                water: '#8AA7FF',
+                steps: '#8AA7FF',
+                workout: '#8AA7FF',
+                sleep: '#F4D35E'
+            };
+
+            graphTitle.textContent = titles[metric];
+            historyList.classList.add('hidden');
+            viewHistoryBtn.textContent = 'View History';
+            showModal('graphModal');
+
+            // Filter and prepare data
+            const entries = filterLastSevenDays(historyData[metric]);
+            console.log('Filtered entries for', metric, ':', entries);
+
+            // Update history list
+            historyList.innerHTML = entries.length > 0
+                ? entries.map(entry => `<li>${entry.date}: ${entry.value} ${units[metric]}</li>`).join('')
+                : '<li>No data for the last 7 days</li>';
+
+            // Chart data
+            const chartData = {
+                labels: entries.map(entry => entry.date),
+                datasets: [{
+                    data: entries.map(entry => entry.value),
+                    borderColor: colors[metric],
+                    backgroundColor: colors[metric].replace('1)', '0.2)'),
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+
+            // Create chart
+            chartInstance = new Chart(ctx, {
+                ...chartConfig,
+                data: chartData
+            });
+        }
+
+        // Steps Progress Circle
+        const progressCircle = document.getElementById('progress-circle');
+        const stepGoalInput = document.getElementById('step-goal');
+        const stepPercentage = document.getElementById('step-percentage');
+        const completedSteps = {{ user_data.steps_count | int }};
+        const circumference = 439.82;
+
+        function updateStepProgress() {
+            const goal = parseInt(stepGoalInput.value) || 1000;
+            const progress = Math.min(completedSteps / goal, 1);
+            progressCircle.setAttribute('stroke-dasharray', `${circumference * progress} ${circumference}`);
+            stepPercentage.textContent = `${Math.round(progress * 100)}%`;
+            fetch('{{ url_for('update_progress') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'set_steps_goal', value: goal })
+            }).then(response => response.json()).then(data => {
+                console.log('Step goal updated:', data.goal);
+            });
+        }
+
+        updateStepProgress();
+        stepGoalInput.addEventListener('change', updateStepProgress);
+    </script>
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fit Fusion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .text-shadow-black {
+      text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+    }
+    .text-shadow-blue {
+      text-shadow: 3px 3px 5px rgba(99, 146, 255, 0.7);
+    }
+    .btn-shadow {
+      box-shadow: 0 10px 20px rgba(99, 146, 255, 0.3);
+    }
+    .inter-font {
+      font-family: 'Inter', sans-serif;
+    }
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body class="bg-white">
+  <!-- Page 1: Welcome Page -->
+  <div id="page-1" class="page active flex-col min-h-screen w-full justify-between items-center px-4">
+    <main class="flex-grow flex flex-col justify-center items-center text-center">
+      <h1 class="flex text-4xl sm:text-5xl md:text-6xl font-extrabold">
+        <span class="text-black text-shadow-black">FIT</span>
+        <span class="text-[#7F9AFF] text-shadow-blue ml-2">FUSION</span>
+      </h1>
+      <p class="mt-4 text-gray-600 text-base sm:text-lg md:text-xl font-medium">Everybody Can Train</p>
+    </main>
+    <footer class="p-4 w-full">
+      <button id="get-started" class="w-full py-4 rounded-full bg-gradient-to-r from-[#7F9AFF] to-[#7A8FFF] text-white font-semibold text-lg sm:text-xl btn-shadow" type="button">
+        Get Started
+      </button>
+    </footer>
+  </div>
+
+  <!-- Page 2: Get Burn -->
+  <div id="page-2" class="page flex-col min-h-screen w-full justify-start items-center pt-8 px-4 inter-font">
+    <img alt="Illustration of a man running with a blue abstract shape background" class="w-full max-w-sm sm:max-w-md object-contain" height="400" src="https://storage.googleapis.com/a1aa/image/7dd34140-e0f6-4855-7492-f3a9ff88a998.jpg" width="600">
+    <div class="w-full max-w-sm sm:max-w-md mt-8">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-4">Get Burn</h1>
+      <p class="text-base sm:text-lg text-gray-600 leading-relaxed">Let’s keep burning, to achieve your goals, it hurts only temporarily, if you give up now you will be in pain forever</p>
+    </div>
+    <button id="next-2" aria-label="Next" class="fixed bottom-8 right-4 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex justify-center items-center text-white text-xl sm:text-2xl shadow-lg">
+      <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 18l6-6-6-6"></path>
+      </svg>
+      <span class="absolute top-1 right-1 w-8 h-8 sm:w-10 sm:h-10 rounded-full border-4 border-blue-300 animate-ping"></span>
+    </button>
+  </div>
+
+  <!-- Page 3: Track Your Goal -->
+  <div id="page-3" class="page flex-col min-h-screen w-full items-center">
+    <div class="w-full max-w-sm sm:max-w-md mx-auto flex-grow">
+      <div class="overflow-hidden rounded-b-full w-full">
+        <img alt="Illustration of a woman in purple workout clothes holding a phone" class="w-full object-cover" height="600" src="https://storage.googleapis.com/a1aa/image/cbfef52a-abe7-4237-96ca-22f285eccd41.jpg" width="600">
+      </div>
+      <div class="px-6 pt-8 pb-20 sm:px-8 sm:pt-10 sm:pb-24">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-black mb-4">Track Your Goal</h1>
+        <p class="text-base sm:text-lg text-gray-600 leading-relaxed">Don't worry if you have trouble determining your goals, We can help you determine your goals and track your goals</p>
+      </div>
+      <button id="next-3" aria-label="Next" class="fixed bottom-8 right-4 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex justify-center items-center text-white text-xl sm:text-2xl shadow-lg">
+        <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 18l6-6-6-6"></path>
+        </svg>
+        <span class="absolute top-1 right-1 w-8 h-8 sm:w-10 sm:h-10 rounded-full border-4 border-blue-300 animate-ping"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Page 4: Improve Sleep Quality -->
+  <div id="page-4" class="page flex-col min-h-screen w-full justify-between px-4">
+    <div class="pt-8 max-w-sm sm:max-w-md mx-auto w-full">
+      <img alt="Illustration of a woman meditating" class="w-full max-w-sm sm:max-w-md mx-auto rounded-t-3xl object-contain" height="400" src="https://storage.googleapis.com/a1aa/image/ff33d410-9017-4a08-a323-48206065f7b1.jpg" width="600">
+      <h1 class="mt-8 text-2xl sm:text-3xl font-extrabold text-black leading-tight">Improve Sleep<br>Quality</h1>
+      <p class="mt-4 text-base sm:text-lg text-gray-500 font-normal leading-relaxed">Improve the quality of your sleep with us, good quality sleep can bring a good mood in the morning</p>
+    </div>
+    <button id="next-4" href="{{ url_for('home') }}" aria-label="Next" class="fixed bottom-8 right-4 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex justify-center items-center text-white text-xl sm:text-2xl shadow-lg">
+      <svg aria-hidden="true" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 18l6-6-6-6"></path>
+      </svg>
+      <span class="absolute top-1 right-1 w-8 h-8 sm:w-10 sm:h-10 rounded-full border-4 border-blue-300 animate-ping"></span>
+    </button>
+  </div>
+
+  <script>
+    const pages = {
+      'page-1': document.getElementById('page-1'),
+      'page-2': document.getElementById('page-2'),
+      'page-3': document.getElementById('page-3'),
+      'page-4': document.getElementById('page-4')
+    };
+
+    function showPage(pageId) {
+      Object.values(pages).forEach(page => page.classList.remove('active'));
+      pages[pageId].classList.add('active');
+    }
+
+    document.getElementById('get-started').addEventListener('click', () => showPage('page-2'));
+    document.getElementById('next-2').addEventListener('click', () => showPage('page-3'));
+    document.getElementById('next-3').addEventListener('click', () => showPage('page-4'));
+    document.getElementById('next-4').addEventListener('click', () => window.location.href = '/home');
+  </script>
+</body>
+</html>

@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+{% block title %}Weight - FitFusion{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>Weight Tracker - FitFusion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+    }
+    #scheduleModal main {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    .animate-fade-out {
+      animation: fadeOut 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(10px); }
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen p-4">
+  <div class="max-w-md mx-auto">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-4">
+      <a href="{{ url_for('home') }}" aria-label="Back to home" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300">
+        <svg aria-hidden="true" class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M15 18l-6-6 6-6"></path>
+        </svg>
+      </a>
+      <h1 class="font-semibold text-lg text-gray-900">Weight Tracker</h1>
+      <button aria-label="More options" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300">
+        <svg aria-hidden="true" class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+          <circle cx="6" cy="10" r="1.5"></circle>
+          <circle cx="10" cy="10" r="1.5"></circle>
+          <circle cx="14" cy="10" r="1.5"></circle>
+        </svg>
+      </button>
+    </header>
+    <div class="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md border border-gray-100">
+      <!-- Chart Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800">Weight Analytics</h2>
+          <p class="text-sm text-gray-500">Track your weekly weight changes</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Today's Weight Button -->
+          <button id="todayWeightBtn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-weight"></i> Today's Weight
+          </button>
+        </div>
+      </div>
+      <!-- Weight Input Modal (Hidden by default) -->
+      <div id="weightModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Add Weight Data</h3>
+            <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input type="date" id="weightDate" class="w-full p-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+              <input type="number" id="weightValue" step="0.1" min="0.1" max="500" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="e.g., 70.5">
+            </div>
+            <div class="pt-2">
+              <button id="saveWeightBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                Save Weight Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Chart Container -->
+      <div class="relative">
+        <div class="flex justify-between items-center mb-3">
+          <div class="text-sm font-medium text-gray-700">This Week</div>
+          <div id="totalWeight" class="text-sm font-semibold text-indigo-600">Latest: {{ user_data.weight }} kg</div>
+        </div>
+        <svg id="weightChart" class="w-full h-52" viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
+          <!-- Grid Background -->
+          <rect width="100%" height="100%" fill="#f8fafc" rx="6" ry="6"></rect>
+          <g id="horizontalGrid"></g>
+          <g id="verticalGrid"></g>
+          <!-- Area fill gradient -->
+          <defs>
+            <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+              <stop stop-color="#6366F1" stop-opacity="0.3"></stop>
+              <stop offset="100%" stop-color="#6366F1" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <path id="areaFill" fill="url(#gradient)" fill-opacity="0.4" stroke="#6366F1" stroke-width="2"></path>
+          <path id="linePath" fill="none" stroke="#6366F1" stroke-width="2"></path>
+          <g id="dataPoints"></g>
+          <g id="yAxisLabels" font-family="Poppins" font-size="10" fill="#64748b"></g>
+        </svg>
+        <div class="flex justify-between mt-2 text-xs font-medium text-gray-500">
+          <span>Sun</span>
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span>Sat</span>
+        </div>
+      </div>
+    </div>
+    <div class="h-8"></div>
+    <!-- Weight Goal Button -->
+    <div class="mb-6 flex justify-between items-center rounded-xl bg-indigo-100 px-5 py-3">
+      <span class="font-semibold text-gray-900 text-sm">Weight Goal</span>
+      <button id="openScheduleModal" class="bg-indigo-400 text-white text-xs font-semibold rounded-full px-4 py-1" type="button">
+        Check
+      </button>
+    </div>
+    <!-- Today Goal -->
+    <h2 class="font-semibold text-gray-900 text-base mb-4">Today Goal</h2>
+    <div class="space-y-4">
+      <!-- Weight Goal -->
+      <div class="flex items-center justify-between bg-white rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+        <div class="flex items-center space-x-3">
+          <img alt="Weight scale icon" class="w-10 h-10 flex-shrink-0" draggable="false" height="40" src="{{ url_for('static', filename='weight_icon.jpg') }}" width="40"/>
+          <div>
+            <p class="font-semibold text-gray-900 text-sm">
+              Target Weight,
+              <span class="font-normal text-gray-500">70 kg</span>
+            </p>
+            <p class="text-xs text-gray-500">Current: <span id="currentWeight">{{ user_data.weight }}</span> kg</p>
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer" for="toggle-weight">
+          <input checked="" class="sr-only peer" id="toggle-weight" type="checkbox"/>
+          <div class="w-11 h-6 bg-indigo-200 rounded-full peer peer-checked:bg-indigo-500 transition-colors"></div>
+          <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transform peer-checked:translate-x-5 transition-transform"></div>
+        </label>
+      </div>
+    </div>
+    <!-- Weight Goal Modal (Hidden by default) -->
+    <div id="scheduleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50">
+      <div class="bg-[#FAFBFD] w-full h-full overflow-y-auto relative">
+        <button id="closeScheduleModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times text-lg"></i>
+        </button>
+        <main class="w-full max-w-md mx-auto p-4">
+          <header class="flex items-center justify-between mb-6">
+            <a href="{{ url_for('home') }}" id="backScheduleModal" aria-label="Back" class="bg-[#F3F5F7] w-10 h-10 rounded-lg flex items-center justify-center">
+              <i class="fas fa-chevron-left text-black text-lg"></i>
+            </a>
+            <h1 class="font-bold text-lg text-black">Weight Goal</h1>
+            <button aria-label="More options" class="bg-[#F3F5F7] w-10 h-10 rounded-lg flex items-center justify-center">
+              <i class="fas fa-ellipsis-h text-black text-lg"></i>
+            </button>
+          </header>
+          <section aria-label="Ideal Weight Goal" class="bg-[#DDE9FF] rounded-3xl flex justify-between items-center p-6 mb-8">
+            <div class="max-w-[60%]">
+              <p class="text-black text-sm mb-1 font-normal">Ideal Weight Goal</p>
+              <p class="text-[#8EA9E9] font-semibold text-lg mb-4">70 kg</p>
+              <button class="bg-[#8EA9E9] text-white text-xs font-semibold rounded-full px-6 py-2 hover:bg-[#7a94d9] transition" type="button">
+                Learn More
+              </button>
+            </div>
+            <img alt="Weight scale illustration" class="w-24 h-24 object-contain" height="96" src="{{ url_for('static', filename='weight_icon.jpg') }}" width="96"/>
+          </section>
+          <h2 class="font-bold text-black text-lg mb-4">Your Goal</h2>
+          <nav aria-label="Days of the week" class="flex space-x-3 overflow-x-auto pb-4 mb-6 snap-x">
+            <button class="flex flex-col items-center justify-center bg-[#F3F5F7] rounded-2xl w-16 h-20 shrink-0 text-[#9B9B9B] font-normal text-xs" type="button">
+              <span>Wed</span>
+              <span class="mt-1 font-semibold text-sm text-black">16</span>
+            </button>
+            <button class="flex flex-col items-center justify-center bg-[#F3F5F7] rounded-2xl w-16 h-20 shrink-0 text-[#9B9B9B] font-normal text-xs" type="button">
+              <span>Thu</span>
+              <span class="mt-1 font-semibold text-sm text-black">17</span>
+            </button>
+            <button class="flex flex-col items-center justify-center bg-[#F3F5F7] rounded-2xl w-16 h-20 shrink-0 text-[#9B9B9B] font-normal text-xs" type="button">
+              <span>Fri</span>
+              <span class="mt-1 font-semibold text-sm text-black">18</span>
+            </button>
+            <button aria-current="date" class="flex flex-col items-center justify-center bg-gradient-to-b from-[#8EA9E9] to-[#7A94D9] rounded-2xl w-16 h-20 shrink-0 text-white font-semibold text-sm" type="button">
+              <span>Sat</span>
+              <span class="mt-1 font-semibold text-lg">19</span>
+            </button>
+            <button class="flex flex-col items-center justify-center bg-[#F3F5F7] rounded-2xl w-16 h-20 shrink-0 text-[#9B9B9B] font-normal text-xs" type="button">
+              <span>Sun</span>
+              <span class="mt-1 font-semibold text-sm text-black">20</span>
+            </button>
+            <button class="flex flex-col items-center justify-center bg-[#F3F5F7] rounded-2xl w-16 h-20 shrink-0 text-[#9B9B9B] font-normal text-xs" type="button">
+              <span>Mon</span>
+              <span class="mt-1 font-semibold text-sm text-black">21</span>
+            </button>
+            <button class="flex flex-col items-center justify-center bg-[#F3F5F7] rounded-2xl w-16 h-20 shrink-0 text-[#9B9B9B] font-normal text-xs" type="button">
+              <span>Tue</span>
+              <span class="mt-1 font-semibold text-sm text-black">22</span>
+            </button>
+          </nav>
+          <section class="space-y-4 mb-8">
+            <article aria-label="Weight goal" class="bg-white rounded-3xl flex items-center justify-between p-4 shadow-[0_10px_15px_-3px_rgba(142,169,233,0.3)]">
+              <div class="flex items-center space-x-4">
+                <img alt="Weight scale icon" class="w-8 h-8 flex-shrink-0" height="32" src="{{ url_for('static', filename='weight_icon.jpg') }}" width="32"/>
+                <div>
+                  <p class="font-bold text-black text-sm">
+                    Target Weight,
+                    <span class="font-normal text-xs text-[#9B9B9B]">70 kg</span>
+                  </p>
+                  <p class="text-[#9B9B9B] text-xs">
+                    Current:
+                    <span class="font-semibold text-sm text-black" id="modalCurrentWeight">{{ user_data.weight }} kg</span>
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input checked="" class="sr-only peer" type="checkbox"/>
+                  <div class="w-11 h-6 bg-gradient-to-r from-[#B18CF7] to-[#A17CF6] rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-[#B18CF7] after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+                <button aria-label="More options" class="text-[#9B9B9B]">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </div>
+            </article>
+          </section>
+          <section aria-label="Weight progress" class="bg-gradient-to-r from-[#E9D9F9] to-[#F3E9FD] rounded-3xl p-6 relative">
+            <p class="text-black text-sm mb-4 max-w-[80%]">
+              You are
+              <span class="font-semibold" id="weightDifference">{{ (user_data.weight - 70) | abs }} kg</span>
+              from your goal
+            </p>
+            <div class="w-full h-4 rounded-full bg-[#D9B9F9] overflow-hidden">
+              <div id="progressBar" class="h-4 rounded-full bg-gradient-to-r from-[#B18CF7] to-[#A17CF6] text-white text-xs font-semibold flex items-center justify-center" style="width: {{ (1 - (user_data.weight - 70) / user_data.weight) * 100 if user_data.weight > 70 else 100 }}%;">
+                {{ (1 - (user_data.weight - 70) / user_data.weight) * 100 if user_data.weight > 70 else 100 | round(1) }}%
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize weight data for each day (0=Sun, 1=Mon, ..., 6=Sat)
+    let weightData = Array(7).fill(0);
+    const maxWeight = 150; // Max weight for chart scaling (kg)
+    const targetWeight = 70;
+    let currentWeight = {{ user_data.weight }};
+
+    // DOM elements
+    const weightModal = document.getElementById('weightModal');
+    const todayWeightBtn = document.getElementById('todayWeightBtn');
+    const closeModal = document.getElementById('closeModal');
+    const saveWeightBtn = document.getElementById('saveWeightBtn');
+    const weightDate = document.getElementById('weightDate');
+    const weightValue = document.getElementById('weightValue');
+    const totalWeightDisplay = document.getElementById('totalWeight');
+    const scheduleModal = document.getElementById('scheduleModal');
+    const openScheduleModal = document.getElementById('openScheduleModal');
+    const closeScheduleModal = document.getElementById('closeScheduleModal');
+    const backScheduleModal = document.getElementById('backScheduleModal');
+    const todayWeightInput = document.getElementById('todayWeightInput');
+    const saveTodayWeightBtn = document.getElementById('saveTodayWeightBtn');
+    const currentWeightDisplay = document.getElementById('currentWeight');
+    const modalCurrentWeight = document.getElementById('modalCurrentWeight');
+    const weightDifference = document.getElementById('weightDifference');
+    const progressBar = document.getElementById('progressBar');
+
+    // Set today's date as default
+    function setCurrentDate() {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      weightDate.value = dateStr;
+    }
+
+    // Validate date is within current week
+    function isDateInCurrentWeek(date) {
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      return date >= weekStart && date <= weekEnd;
+    }
+
+    // Fetch weight data from server
+    async function fetchWeightData() {
+      try {
+        const response = await fetch('/api/get_tracking');
+        const data = await response.json();
+        if (data.weight && data.weight.history) {
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+          weightData = Array(7).fill(0);
+          data.weight.history.forEach(entry => {
+            const entryDate = new Date(entry.timestamp);
+            const dayDiff = Math.floor((entryDate - weekStart) / (1000 * 60 * 60 * 24));
+            if (dayDiff >= 0 && dayDiff < 7) {
+              weightData[dayDiff] = parseFloat(entry.value);
+              if (dayDiff === new Date().getDay()) {
+                currentWeight = parseFloat(entry.value);
+              }
+            }
+          });
+          updateChart();
+          updateCurrentWeight();
+          totalWeightDisplay.textContent = `Latest: ${data.weight.value} kg`;
+        }
+      } catch (error) {
+        console.error('Error fetching weight data:', error);
+      }
+    }
+
+    // Initialize the chart
+    function initChart() {
+      drawGridLines();
+      fetchWeightData();
+      setCurrentDate();
+      setupEventListeners();
+    }
+
+    // Draw grid lines
+    function drawGridLines() {
+      const horizontalGrid = document.getElementById('horizontalGrid');
+      const verticalGrid = document.getElementById('verticalGrid');
+      horizontalGrid.innerHTML = '';
+      verticalGrid.innerHTML = '';
+      
+      // Horizontal grid lines
+      for (let i = 0; i <= maxWeight; i += 30) {
+        const y = 160 - (i * (140 / maxWeight)) - 20;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('stroke', '#e2e8f0');
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('x1', '0');
+        line.setAttribute('x2', '320');
+        line.setAttribute('y1', y);
+        line.setAttribute('y2', y);
+        horizontalGrid.appendChild(line);
+      }
+      
+      // Vertical grid lines
+      for (let i = 0; i < 7; i++) {
+        const x = 45.7 + (i * 45.7);
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('stroke', '#e2e8f0');
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('x1', x);
+        line.setAttribute('x2', x);
+        line.setAttribute('y1', '0');
+        line.setAttribute('y2', '160');
+        verticalGrid.appendChild(line);
+      }
+      
+      // Y axis labels
+      const yAxisLabels = document.getElementById('yAxisLabels');
+      yAxisLabels.innerHTML = '';
+      for (let i = 0; i <= maxWeight; i += 30) {
+        const y = 160 - (i * (140 / maxWeight)) - 20;
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', '310');
+        text.setAttribute('y', y + 4);
+        text.setAttribute('text-anchor', 'end');
+        text.textContent = `${i} kg`;
+        yAxisLabels.appendChild(text);
+      }
+    }
+
+    // Update chart with current data
+    function updateChart() {
+      const areaFill = document.getElementById('areaFill');
+      const linePath = document.getElementById('linePath');
+      const dataPoints = document.getElementById('dataPoints');
+      dataPoints.innerHTML = '';
+      
+      let pathData = '';
+      let areaData = '';
+      let latestWeight = 0;
+
+      for (let i = 0; i < 7; i++) {
+        const x = 45.7 + (i * 45.7);
+        const y = 160 - (weightData[i] * (140 / maxWeight)) - 20;
+        if (weightData[i] > 0) {
+          latestWeight = weightData[i];
+        }
+        
+        if (i === 0) {
+          pathData = `M${x} ${y}`;
+          areaData = `M${x} 160 L${x} ${y}`;
+        } else {
+          pathData += ` L${x} ${y}`;
+          areaData += ` L${x} ${y}`;
+        }
+        
+        // Add data point circles
+        if (weightData[i] > 0) {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', x);
+          circle.setAttribute('cy', y);
+          circle.setAttribute('r', '4');
+          circle.setAttribute('fill', 'white');
+          circle.setAttribute('stroke', '#6366F1');
+          circle.setAttribute('stroke-width', '2');
+          circle.classList.add('cursor-pointer', 'hover:r-5', 'transition-all');
+          circle.addEventListener('click', () => editDayData(i));
+          dataPoints.appendChild(circle);
+          
+          // Add value label
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('x', x);
+          text.setAttribute('y', y - 8);
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('font-size', '10');
+          text.setAttribute('fill', '#6366F1');
+          text.textContent = `${weightData[i]} kg`;
+          dataPoints.appendChild(text);
+        }
+      }
+      
+      areaData += ' L320 160 L0 160 Z';
+      areaFill.setAttribute('d', areaData);
+      linePath.setAttribute('d', pathData);
+      totalWeightDisplay.textContent = `Latest: ${latestWeight || currentWeight} kg`;
+    }
+
+    // Edit data for specific day
+    function editDayData(dayIndex) {
+      const date = new Date();
+      date.setDate(date.getDate() - date.getDay() + dayIndex);
+      weightDate.value = date.toISOString().split('T')[0];
+      weightValue.value = weightData[dayIndex] > 0 ? weightData[dayIndex] : '';
+      weightModal.classList.remove('hidden');
+    }
+
+    // Save weight data to server
+    async function saveWeightData() {
+      const weight = parseFloat(weightValue.value);
+      if (isNaN(weight) || weight < 0.1 || weight > 500) {
+        alert('Please enter a valid weight between 0.1 and 500 kg');
+        return;
+      }
+      const date = new Date(weightDate.value);
+      if (!weightDate.value || !isDateInCurrentWeek(date)) {
+        alert('Please select a date within the current week');
+        return;
+      }
+      const dayOfWeek = date.getDay();
+      try {
+        const response = await $.ajax({
+          url: '/api/update_weight',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ action: 'set', value: weight, timestamp: date.toISOString() })
+        });
+        weightData[dayOfWeek] = weight;
+        if (dayOfWeek === new Date().getDay()) {
+          currentWeight = weight;
+          updateCurrentWeight();
+        }
+        updateChart();
+        weightModal.classList.add('hidden');
+        showNotification('Weight data saved successfully!');
+      } catch (error) {
+        console.error('Error saving weight:', error);
+        alert('Error updating weight: ' + (error.responseJSON ? error.responseJSON.error : 'Unknown error'));
+      }
+    }
+
+    // Save today's weight to server
+    async function saveTodayWeight() {
+      const weight = parseFloat(todayWeightInput.value);
+      if (isNaN(weight) || weight < 0.1 || weight > 500) {
+        alert('Please enter a valid weight between 0.1 and 500 kg');
+        return;
+      }
+      const date = new Date();
+      const dayOfWeek = date.getDay();
+      try {
+        const response = await $.ajax({
+          url: '/api/update_weight',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ action: 'set', value: weight, timestamp: date.toISOString() })
+        });
+        weightData[dayOfWeek] = weight;
+        currentWeight = weight;
+        updateCurrentWeight();
+        updateChart();
+        todayWeightInput.value = '';
+        showNotification('Today\'s weight saved successfully!');
+      } catch (error) {
+        console.error('Error saving today\'s weight:', error);
+        alert('Error updating weight: ' + (error.responseJSON ? error.responseJSON.error : 'Unknown error'));
+      }
+    }
+
+    // Update current weight displays and progress
+    function updateCurrentWeight() {
+      currentWeightDisplay.textContent = currentWeight;
+      modalCurrentWeight.textContent = `${currentWeight} kg`;
+      const difference = Math.abs(currentWeight - targetWeight);
+      weightDifference.textContent = `${difference} kg`;
+      const progress = currentWeight > targetWeight ? (1 - difference / currentWeight) * 100 : 100;
+      progressBar.style.width = `${progress}%`;
+      progressBar.textContent = `${Math.round(progress)}%`;
+    }
+
+    // Show notification
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.classList.add('animate-fade-out');
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      todayWeightBtn.addEventListener('click', () => {
+        setCurrentDate();
+        weightValue.value = '';
+        weightModal.classList.remove('hidden');
+      });
+      closeModal.addEventListener('click', () => weightModal.classList.add('hidden'));
+      saveWeightBtn.addEventListener('click', saveWeightData);
+      weightModal.addEventListener('click', (e) => {
+        if (e.target === weightModal) {
+          weightModal.classList.add('hidden');
+        }
+      });
+      openScheduleModal.addEventListener('click', () => {
+        scheduleModal.classList.remove('hidden');
+      });
+      closeScheduleModal.addEventListener('click', () => {
+        scheduleModal.classList.add('hidden');
+      });
+      backScheduleModal.addEventListener('click', () => {
+        scheduleModal.classList.add('hidden');
+      });
+      scheduleModal.addEventListener('click', (e) => {
+        if (e.target === scheduleModal) {
+          scheduleModal.classList.add('hidden');
+        }
+      });
+      saveTodayWeightBtn.addEventListener('click', saveTodayWeight);
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', initChart);
+  </script>
+</body>
+</html>
+{% endblock %}
